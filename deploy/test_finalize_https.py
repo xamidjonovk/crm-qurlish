@@ -10,6 +10,11 @@ spec.loader.exec_module(module)
 
 
 class HttpsSetupTests(unittest.TestCase):
+    def test_ca_negative_dns_cache_waits_without_production_retry(self):
+        self.assertEqual(module.classify_issuance(1, "Let's Encrypt dry run failed: DNS problem: NXDOMAIN"), "dns_pending")
+        self.assertEqual(module.classify_issuance(1, "requesting the real certificate: DNS problem: NXDOMAIN"), "failed")
+        self.assertEqual(module.classify_issuance(1, "Let's Encrypt dry run failed: Permission denied"), "staging_failed")
+
     def test_dns_does_not_allow_foreign_ipv6(self):
         self.assertFalse(module.dns_ready({"169.58.86.108", "2001:db8::1"}))
         self.assertFalse(module.dns_ready(set()))

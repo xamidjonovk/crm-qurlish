@@ -32,21 +32,31 @@ def dns_ready(addresses):
     return bool(addresses) and addresses <= EXPECTED_IPS
 
 
-def issue_certificate():
-    result = subprocess.run(
-        ["sudo", "-n", "/usr/local/sbin/sdp", "tls", DOMAIN],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=720,
-    )
-    output = result.stdout or ""
-    print(output[-8000:], flush=True)
-    if result.returncode == 0:
+def classify_issuance(returncode, output):
+    if returncode == 0:
         return "issued"
     if "Let's Encrypt dry run failed" in output and "requesting the real certificate" not in output:
         if "NXDOMAIN" in output or "DNS problem:" in output:
             return "dns_pending"
         return "staging_failed"
-    # Never automatically retry a failed production issuance.
     return "failed"
+
+
+def issue_certificate():
+    # Serialize the two project jobs; Certbot uses a global on-disk lock too.
+    import fcntl
+    lock_path = Path("/var/lib/crm-qurlish-https/issuance.lock")
+    lock_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with lock_path.open("a", encoding="utf-8") as lock:
+        os.fchmod(lock.fileno(), 0o600)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        result = subprocess.run(
+            ["sudo", "-n", "/usr/local/sbin/sdp", "tls", DOMAIN],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=720,
+        )
+    output = result.stdout or ""
+    print(output[-8000:], flush=True)
+    return classify_issuance(result.returncode, output)
 
 
 def verify_https():
