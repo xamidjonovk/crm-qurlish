@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily renewal check for the CRM API certificate
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+Unit=crm-qurlish-cert-renew.service
+
+[Install]
+WantedBy=timers.target

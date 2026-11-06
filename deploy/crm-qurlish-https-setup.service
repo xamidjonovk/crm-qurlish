@@ -1,0 +1,20 @@
+[Unit]
+Description=Finish CRM HTTPS after DNS propagation
+Wants=network-online.target
+After=network-online.target nginx.service
+
+[Service]
+Type=simple
+User=sdp-crm-qurlish
+Group=sdp-crm-qurlish
+StateDirectory=crm-qurlish-https
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 /usr/local/lib/server-deploy/crm-qurlish-finalize-https.py --max-wait 43200 --interval 300
+RuntimeMaxSec=13h
+Restart=no
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

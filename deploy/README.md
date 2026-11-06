@@ -23,3 +23,18 @@ Schema o‘zgartirishdan oldin loyiha bazasining zaxirasini oling. Broker ilova 
 ## IP va port orqali kirish
 
 Tashqi HTTP port: `20001`. Host Nginx’dagi `/etc/nginx/conf.d/crm-qurlish-port.conf` faqat ushbu loyiha uchun `127.0.0.1:20000` ga proxy qiladi; namuna `nginx-port.conf.example` da. Server IP’si `ALLOWED_HOSTS` ga kiritiladi. Manzil: `http://<server-ip>:20001/docs`. Bu port HTTP orqali ishlaydi; domen/TLS keyinchalik alohida sozlanadi. Konfiguratsiya o‘zgartirilganda avval `nginx -t`, so‘ng graceful reload bajariladi. Ushbu listener Docker Compose emas, host Nginx orqali boshqariladi.
+
+## api.crmdev.uz va HTTPS
+
+`api.crmdev.uz` Nginx orqali `127.0.0.1:20000` ga bog‘langan. DNS tarqalishini kutish uchun `crm-qurlish-https-setup.service` loyiha foydalanuvchisi ostida bir marta ishlaydi: har 5 daqiqada yozuvlarni tekshiradi, eng ko‘pi 12 soat kutadi. Faqat barcha A/AAAA manzillar shu serverga tegishli bo‘lsa, loyiha brokerining `tls` buyrug‘ini chaqiradi. Certbot staging sinovi muvaffaqiyatidan keyin haqiqiy sertifikat olinadi, HTTP → HTTPS yoqiladi va `/ready` tekshiriladi. Boshlang‘ich sertifikat olishning production bosqichidagi xato avtomatik qayta urinilmaydi.
+
+Holatini ko‘rish:
+
+```powershell
+ssh sdp-crm-qurlish cat /var/lib/crm-qurlish-https/status.json
+ssh sdp-crm-qurlish sudo sdp domains
+```
+
+`completed` HTTPS ishlashini tekshirilganini bildiradi; `waiting_for_dns` DNS hali tayyor emasligini bildiradi. Kutish muddati tugasa `dns_wait_expired` yoziladi. Administrator muammoni hal qilgach, yakunlangan eski holat faylini ko‘rib chiqib, faqat ushbu setup xizmatini qayta ishga tushirishi mumkin; `deadline` saqlangani uchun muddati o‘tgan faylni zaxiralab olib tashlamasdan qayta start yangi kutish oynasini yaratmaydi.
+
+Sertifikat yangilanishi uchun faqat `api.crmdev.uz` ga xizmat qiladigan `crm-qurlish-cert-renew.timer` kunlik yoqilgan. U sertifikat mavjud bo‘lgach Certbot renewal bajaradi va muvaffaqiyatli yangilanganda Nginx’ni sintaksis tekshiruvidan keyin graceful reload qiladi. Boshqa loyihalarning renewal sozlamalari o‘zgartirilmaydi. Servislar uchun administrator diagnostikasi: `systemctl status crm-qurlish-https-setup.service` va `journalctl -u crm-qurlish-https-setup.service`.
