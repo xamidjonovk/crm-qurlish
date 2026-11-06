@@ -168,8 +168,14 @@ test("apartment create edit price delete", async ({ page }) => {
   await page.getByLabel("Narx (so‘m)").fill("123000000");
   await page.getByRole("button", { name: "Saqlash", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.getByLabel("Keyingi sahifa").click();
   const row = page.getByRole("row").filter({ hasText: number });
+  // The separate 3D demo adds inventory; locate the created record across pages.
+  for (let i = 0; i < 100 && (await row.count()) === 0; i++) {
+    const next = page.getByLabel("Keyingi sahifa");
+    if (await next.isDisabled()) break;
+    await next.click();
+    await expect(page.getByRole("table")).toBeVisible();
+  }
   await expect(row).toBeVisible();
   await row.getByRole("button", { name: "Narx", exact: true }).click();
   await page.getByLabel("Narx (so‘m)").fill("234000000");

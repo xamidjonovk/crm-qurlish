@@ -9,6 +9,7 @@ from app.core.db import SessionDep
 from app.identity import Audit, User
 from app.models import Apartment, Complex
 from app.modules.auth.router import require_permission
+from app.modules.residence.schemas import ApartmentPlacement, validate_placement
 from app.schemas import ApartmentRead
 
 AdminDep = Annotated[User, Depends(require_permission("inventory:write"))]
@@ -20,7 +21,7 @@ class ComplexInput(BaseModel):
     name: str = Field(min_length=2, max_length=120)
 
 
-class ApartmentInput(BaseModel):
+class ApartmentInput(ApartmentPlacement):
     model_config = ConfigDict(extra="forbid")
     complex_id: int = Field(gt=0)
     number: str = Field(min_length=1, max_length=30)
@@ -63,6 +64,9 @@ async def create_apartment(data: ApartmentInput, user: AdminDep, session: Sessio
     ).first()
     if complex_ is None:
         raise HTTPException(404, "Majmua topilmadi")
+    await validate_placement(
+        session, user.company_id, data.complex_id, data.model_dump()
+    )
     item = Apartment(company_id=user.company_id, **data.model_dump())
     session.add(item)
     try:

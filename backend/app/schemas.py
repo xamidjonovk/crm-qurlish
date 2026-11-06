@@ -17,6 +17,14 @@ class ApartmentRead(BaseModel):
     rooms: int
     price_uzs: int
     availability: str
+    building_id: int | None = None
+    floor: int = 1
+    facade: str = "front"
+    position: int = 0
+    area_m2: float | None = None
+    interior_url: str | None = None
+    floor_plan_url: str | None = None
+    visualization_note: str | None = None
 
 
 class LeadCreate(BaseModel):

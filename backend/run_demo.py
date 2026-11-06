@@ -23,7 +23,7 @@ if __name__ == "__main__":
             uvicorn.Config(
                 "app.main:app",
                 host="127.0.0.1",
-                port=18765,
+                port=int(os.environ.get("DEMO_PORT", "18765")),
                 log_level="warning",
                 access_log=False,
             )

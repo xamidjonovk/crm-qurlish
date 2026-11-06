@@ -6,6 +6,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKeyConstraint,
+    Index,
     UniqueConstraint,
 )
 from sqlmodel import Field, SQLModel
@@ -30,6 +31,30 @@ class Complex(SQLModel, table=True):
     name: str = Field(max_length=120)
 
 
+class Building(SQLModel, table=True):
+    __tablename__ = "buildings"
+    __table_args__ = (
+        UniqueConstraint("company_id", "complex_id", "id"),
+        UniqueConstraint("complex_id", "name"),
+        ForeignKeyConstraint(
+            ["company_id", "complex_id"], ["complexes.company_id", "complexes.id"]
+        ),
+        CheckConstraint("floors BETWEEN 1 AND 60", name="ck_building_floors"),
+        CheckConstraint("width >= 8 AND depth >= 8", name="ck_building_dimensions"),
+    )
+    id: int | None = Field(default=None, primary_key=True)
+    company_id: int = Field(foreign_key="companies.id", index=True)
+    complex_id: int = Field(index=True)
+    name: str = Field(max_length=60)
+    floors: int = 7
+    x: float = 0
+    z: float = 0
+    rotation: float = 0
+    width: float = 22
+    depth: float = 14
+    color: str = Field(default="#e5dfd2", max_length=7)
+
+
 class Apartment(SQLModel, table=True):
     __tablename__ = "apartments"
     __table_args__ = (
@@ -37,6 +62,22 @@ class Apartment(SQLModel, table=True):
         UniqueConstraint("complex_id", "number"),
         ForeignKeyConstraint(
             ["company_id", "complex_id"], ["complexes.company_id", "complexes.id"]
+        ),
+        ForeignKeyConstraint(
+            ["company_id", "complex_id", "building_id"],
+            ["buildings.company_id", "buildings.complex_id", "buildings.id"],
+        ),
+        UniqueConstraint(
+            "building_id", "floor", "facade", "position", name="uq_apartment_placement"
+        ),
+        Index("ix_apartment_scene", "company_id", "complex_id", "building_id"),
+        CheckConstraint(
+            "floor BETWEEN 1 AND 60 AND position BETWEEN 0 AND 11",
+            name="ck_apartment_placement",
+        ),
+        CheckConstraint("area_m2 IS NULL OR area_m2 > 0", name="ck_apartment_area"),
+        CheckConstraint(
+            "facade IN ('front','back','left','right')", name="ck_apartment_facade"
         ),
         CheckConstraint(
             "rooms BETWEEN 1 AND 10 AND price_uzs > 0", name="ck_apartment_values"
@@ -49,6 +90,14 @@ class Apartment(SQLModel, table=True):
     rooms: int
     price_uzs: int = Field(sa_column=Column(BigInteger, nullable=False))
     availability: str = Field(default="available", max_length=20)
+    building_id: int | None = Field(default=None)
+    floor: int = 1
+    facade: str = Field(default="front", max_length=10)
+    position: int = 0
+    area_m2: float | None = None
+    interior_url: str | None = Field(default=None, max_length=1000)
+    floor_plan_url: str | None = Field(default=None, max_length=1000)
+    visualization_note: str | None = Field(default=None, max_length=300)
 
 
 class Lead(SQLModel, table=True):

@@ -30,6 +30,7 @@ for name in ("course_crm_frontend_demo", "course_crm_frontend_test"):
     )
     if name.endswith("demo"):
         subprocess.run([sys.executable, "-m", "app.seed"], env=env, check=True)
+        subprocess.run([sys.executable, "-m", "app.seed_residence"], env=env, check=True)
     else:
         env["TEST_DATABASE_URL"] = env["DATABASE_URL"]
         subprocess.run([sys.executable, "-m", "pytest", "-q"], env=env, check=True)

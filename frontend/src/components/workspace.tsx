@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Activity,
   ArrowLeft,
+  Layers3,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { roles } from "@/lib/types";
@@ -22,7 +23,14 @@ const Catalog = dynamic(() => import("@/features/catalog/catalog"));
 const Team = dynamic(() => import("@/features/team/team"));
 const Audit = dynamic(() => import("@/features/audit/audit"));
 const Public = dynamic(() => import("@/features/public/catalog"));
+const Residence = dynamic(() => import("@/features/residence/residence"));
 const items = [
+  {
+    key: "residence",
+    label: "Majmua 3D",
+    icon: Layers3,
+    permission: "leads:read",
+  },
   {
     key: "leads",
     label: "Arizalar",
@@ -151,6 +159,8 @@ export function Workspace() {
           )}
           {current.key === "leads" ? (
             <Leads />
+          ) : current.key === "residence" ? (
+            <Residence />
           ) : current.key === "catalog" ? (
             <Catalog />
           ) : current.key === "team" ? (

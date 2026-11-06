@@ -2,6 +2,8 @@
 
 FastAPI va PostgreSQL asosidagi CRM. Backend `backend/`, frontend `frontend/` ichida. Frontend API bilan bir manzildan ishlaydi.
 
+**Majmua 3D**: tabiiy hi-tech bino → ochiq qavat → mebelli 3D interyer, to‘siqsiz kamera, jonli sotuv holatlari, planirovka, maydon/narx va admin boshqaruvi. [Foydalanish, migratsiya va demo qo‘llanmasi](docs/residence-3d.md).
+
 ## Docker bilan ishga tushirish
 
 Docker Desktop va Compose kerak. Yangi loyiha uchun `python scripts/init_env.py` maxfiy qiymatlar bilan `.env` yaratadi va mavjud faylni ustiga yozmaydi. Agar `.env` oldindan mavjud bo‘lsa, unga `.env.example` dagi `POSTGRES_PASSWORD` ni qo‘shing. `JWT_SECRET` kamida 40 ta tasodifiy belgidan iborat bo‘lishi kerak. Compose paroli URL uchun xavfsiz belgilar: harflar, raqamlar, `-`, `_` dan iborat bo‘lsin.

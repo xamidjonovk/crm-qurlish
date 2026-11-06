@@ -9,6 +9,7 @@ from app.core.db import SessionDep
 from app.identity import Audit, User
 from app.models import Apartment, Complex
 from app.modules.auth.router import require_permission
+from app.modules.residence.schemas import ApartmentPlacement, validate_placement
 from app.schemas import ApartmentRead, ComplexRead
 
 AdminDep = Annotated[User, Depends(require_permission("inventory:write"))]
@@ -20,7 +21,7 @@ class ComplexInput(BaseModel):
     name: str = Field(min_length=2, max_length=120)
 
 
-class ApartmentInput(BaseModel):
+class ApartmentInput(ApartmentPlacement):
     model_config = ConfigDict(extra="forbid")
     complex_id: int = Field(gt=0)
     number: str = Field(min_length=1, max_length=30)
@@ -28,7 +29,7 @@ class ApartmentInput(BaseModel):
     price_uzs: int = Field(gt=0, le=10**15)
 
 
-class ApartmentPatch(BaseModel):
+class ApartmentPatch(ApartmentPlacement):
     model_config = ConfigDict(extra="forbid")
     number: str | None = Field(default=None, min_length=1, max_length=30)
     rooms: int | None = Field(default=None, ge=1, le=10)
@@ -148,6 +149,9 @@ async def apartments(
 @router.post("/apartments", response_model=ApartmentRead, status_code=201)
 async def create_apartment(data: ApartmentInput, user: AdminDep, session: SessionDep):
     await find(session, Complex, data.complex_id, user.company_id)
+    await validate_placement(
+        session, user.company_id, data.complex_id, data.model_dump()
+    )
     return await save(
         session,
         Apartment(company_id=user.company_id, **data.model_dump()),
@@ -167,10 +171,22 @@ async def edit_apartment(
 ):
     item = await find(session, Apartment, item_id, user.company_id)
     values = data.model_dump(exclude_unset=True)
-    if not values or any((value is None for value in values.values())):
+    nullable = {
+        "building_id",
+        "area_m2",
+        "interior_url",
+        "floor_plan_url",
+        "visualization_note",
+    }
+    if not values or any(
+        value is None and key not in nullable for key, value in values.items()
+    ):
         raise HTTPException(422, "Kamida bitta bo‘sh bo‘lmagan maydon kerak")
     if item.availability != "available":
         raise HTTPException(409, "Bron yoki sotilgan xonadonni tahrirlab bo‘lmaydi")
+    await validate_placement(
+        session, user.company_id, item.complex_id, {**item.model_dump(), **values}
+    )
     for key, value in values.items():
         setattr(item, key, value)
     return await save(session, item, user, "apartment.updated")

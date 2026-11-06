@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import useSWR from "swr";
+import dynamic from "next/dynamic";
 import { Building2, ArrowUpRight } from "lucide-react";
 import { api, json } from "@/lib/api";
 import { type Apartment, type Complex, availability, money } from "@/lib/types";
@@ -12,7 +13,9 @@ import {
   Editor,
   Field,
 } from "@/components/ui";
+const Residence = dynamic(() => import("@/features/residence/residence"));
 export default function PublicCatalog() {
+  const [visual, setVisual] = useState(false);
   const [input, setInput] = useState("");
   const [slug, setSlug] = useState("");
   const [offset, setOffset] = useState(0);
@@ -66,103 +69,130 @@ export default function PublicCatalog() {
         </form>
         {slug && (
           <>
-            <div className="panel-toolbar">
-              <span>{slug}</span>
-              <div className="filters">
-                <select
-                  aria-label="Majmua filtri"
-                  value={complex}
-                  onChange={(e) => {
-                    setComplex(e.target.value);
-                    setOffset(0);
-                  }}
-                >
-                  <option value="">Barcha majmualar</option>
-                  {complexes?.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Xonalar filtri"
-                  value={rooms}
-                  onChange={(e) => {
-                    setRooms(e.target.value);
-                    setOffset(0);
-                  }}
-                >
-                  <option value="">Barcha xonalar</option>
-                  {Array.from({ length: 10 }, (_, i) => (
-                    <option key={i} value={i + 1}>
-                      {i + 1} xona
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="tabs">
+              <button
+                className={!visual ? "active" : ""}
+                onClick={() => setVisual(false)}
+              >
+                Ro‘yxat
+              </button>
+              <button
+                className={visual ? "active" : ""}
+                onClick={() => setVisual(true)}
+              >
+                Majmua 3D
+              </button>
             </div>
-            {receipt && (
+            {visual ? (
+              <Residence key={slug} slug={slug} onApply={setSelected} />
+            ) : (
+              <>
+                <div className="panel-toolbar">
+                  <span>{slug}</span>
+                  <div className="filters">
+                    <select
+                      aria-label="Majmua filtri"
+                      value={complex}
+                      onChange={(e) => {
+                        setComplex(e.target.value);
+                        setOffset(0);
+                      }}
+                    >
+                      <option value="">Barcha majmualar</option>
+                      {complexes?.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Xonalar filtri"
+                      value={rooms}
+                      onChange={(e) => {
+                        setRooms(e.target.value);
+                        setOffset(0);
+                      }}
+                    >
+                      <option value="">Barcha xonalar</option>
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <option key={i} value={i + 1}>
+                          {i + 1} xona
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {receipt && (
+                  <p className="success" role="status">
+                    Arizangiz qabul qilindi. Ariza raqami: #{receipt}.
+                  </p>
+                )}
+                {detailError && (
+                  <p className="error" role="alert">
+                    {detailError}
+                  </p>
+                )}
+                <Resource
+                  loading={isLoading}
+                  error={error}
+                  empty={!data?.length}
+                  retry={mutate}
+                >
+                  <div className="apartment-grid">
+                    {data?.map((x) => (
+                      <article key={x.id} className="apartment">
+                        <div className="apartment-top">
+                          <Building2 size={28} />
+                          <Badge
+                            value={x.availability}
+                            label={
+                              availability[x.availability] || x.availability
+                            }
+                          />
+                        </div>
+                        <p>
+                          {complexes?.find((c) => c.id === x.complex_id)
+                            ?.name || `Majmua #${x.complex_id}`}
+                        </p>
+                        <h2>
+                          {x.number} · {x.rooms} xona
+                        </h2>
+                        <strong className="price">{money(x.price_uzs)}</strong>
+                        <button
+                          disabled={x.availability !== "available"}
+                          onClick={async () => {
+                            try {
+                              setSelected(
+                                await api<Apartment>(
+                                  base + "/kvartiralar/" + x.id,
+                                  {},
+                                  false,
+                                ),
+                              );
+                              setDetailError("");
+                            } catch (e) {
+                              setDetailError((e as Error).message);
+                            }
+                          }}
+                        >
+                          Ariza qoldirish <ArrowUpRight size={16} />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </Resource>
+                <Pagination
+                  offset={offset}
+                  count={data?.length || 0}
+                  onChange={setOffset}
+                />
+              </>
+            )}
+            {visual && receipt && (
               <p className="success" role="status">
                 Arizangiz qabul qilindi. Ariza raqami: #{receipt}.
               </p>
             )}
-            {detailError && (
-              <p className="error" role="alert">
-                {detailError}
-              </p>
-            )}
-            <Resource
-              loading={isLoading}
-              error={error}
-              empty={!data?.length}
-              retry={mutate}
-            >
-              <div className="apartment-grid">
-                {data?.map((x) => (
-                  <article key={x.id} className="apartment">
-                    <div className="apartment-top">
-                      <Building2 size={28} />
-                      <Badge
-                        value={x.availability}
-                        label={availability[x.availability] || x.availability}
-                      />
-                    </div>
-                    <p>
-                      {complexes?.find((c) => c.id === x.complex_id)?.name ||
-                        `Majmua #${x.complex_id}`}
-                    </p>
-                    <h2>
-                      {x.number} · {x.rooms} xona
-                    </h2>
-                    <strong className="price">{money(x.price_uzs)}</strong>
-                    <button
-                      disabled={x.availability !== "available"}
-                      onClick={async () => {
-                        try {
-                          setSelected(
-                            await api<Apartment>(
-                              base + "/kvartiralar/" + x.id,
-                              {},
-                              false,
-                            ),
-                          );
-                          setDetailError("");
-                        } catch (e) {
-                          setDetailError((e as Error).message);
-                        }
-                      }}
-                    >
-                      Ariza qoldirish <ArrowUpRight size={16} />
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </Resource>
-            <Pagination
-              offset={offset}
-              count={data?.length || 0}
-              onChange={setOffset}
-            />
           </>
         )}
       </section>

@@ -21,6 +21,31 @@ export type Apartment = {
   rooms: number;
   price_uzs: number;
   availability: string;
+  building_id: number | null;
+  floor: number;
+  facade: "front" | "back" | "left" | "right";
+  position: number;
+  area_m2: number | null;
+  interior_url: string | null;
+  floor_plan_url: string | null;
+  visualization_note: string | null;
+};
+export type Building = {
+  id: number;
+  complex_id: number;
+  name: string;
+  floors: number;
+  x: number;
+  z: number;
+  rotation: number;
+  width: number;
+  depth: number;
+  color: string;
+};
+export type Residence = {
+  complex: Complex;
+  buildings: Building[];
+  apartments: Apartment[];
 };
 export type TeamUser = {
   id: number;

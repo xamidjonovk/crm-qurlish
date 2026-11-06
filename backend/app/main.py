@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -16,6 +17,7 @@ from app.modules.catalog.router import router as catalog_router
 from app.modules.inventory.router import router as inventory_router
 from app.modules.leads.router import router as crm_router
 from app.modules.public.router import router
+from app.modules.residence.router import router as residence_router
 from app.modules.users.router import router as users_router
 
 from .observability import install
@@ -31,6 +33,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Construction CRM", lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.include_router(router)
 app.include_router(catalog_router)
 
@@ -39,6 +42,8 @@ frontend_dir = Path(
 )
 if (frontend_dir / "_next").is_dir():
     app.mount("/_next", StaticFiles(directory=frontend_dir / "_next"), name="next-assets")
+if (frontend_dir / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=frontend_dir / "assets"), name="media-assets")
 
 
 @app.get("/", include_in_schema=False)
@@ -77,3 +82,4 @@ app.include_router(auth_router)
 app.include_router(crm_router)
 app.include_router(users_router)
 app.include_router(inventory_router)
+app.include_router(residence_router)
