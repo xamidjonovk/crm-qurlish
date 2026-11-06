@@ -1,0 +1,85 @@
+name: Test, build and deploy
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: course_crm_ci
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: test_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U crm -d course_crm_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgresql+psycopg://crm:test_password@127.0.0.1:5432/course_crm_ci
+      TEST_DATABASE_URL: postgresql+psycopg://crm:test_password@127.0.0.1:5432/course_crm_ci
+      JWT_SECRET: ci-test-secret-which-is-longer-than-forty-characters
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run ruff check app tests
+      - run: uv run alembic upgrade head
+      - run: uv run pytest
+  build:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: image
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.image.outputs.image }}
+  deploy:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    concurrency:
+      group: crm-production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the exact Git commit through the project broker
+        env:
+          SDP_HOST: ${{ secrets.SDP_HOST }}
+          SDP_PORT: ${{ secrets.SDP_PORT }}
+          SDP_USER: ${{ secrets.SDP_USER }}
+          SDP_SSH_KEY: ${{ secrets.SDP_SSH_KEY }}
+          SDP_KNOWN_HOSTS: ${{ secrets.SDP_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SDP_SSH_KEY" > ~/.ssh/crm_deploy
+          chmod 600 ~/.ssh/crm_deploy
+          printf '%s\n' "$SDP_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/crm_deploy -p "${SDP_PORT:-22}" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+            "$SDP_USER@$SDP_HOST" "deploy $GITHUB_SHA"

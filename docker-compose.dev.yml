@@ -1,0 +1,8 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic

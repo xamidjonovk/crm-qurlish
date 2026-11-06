@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH"
+WORKDIR /app
+RUN pip install --no-cache-dir uv==0.13.6
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
+RUN useradd --create-home --uid 10001 appuser
+USER appuser
+EXPOSE 8001
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8001"]
