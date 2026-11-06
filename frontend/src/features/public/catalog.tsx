@@ -14,10 +14,16 @@ import {
   Field,
 } from "@/components/ui";
 const Residence = dynamic(() => import("@/features/residence/residence"));
-export default function PublicCatalog() {
-  const [visual, setVisual] = useState(false);
-  const [input, setInput] = useState("");
-  const [slug, setSlug] = useState("");
+export default function PublicCatalog({
+  initialSlug = "",
+  embedded = false,
+}: {
+  initialSlug?: string;
+  embedded?: boolean;
+}) {
+  const [visual, setVisual] = useState(embedded);
+  const [input, setInput] = useState(initialSlug);
+  const [slug, setSlug] = useState(initialSlug);
   const [offset, setOffset] = useState(0);
   const [complex, setComplex] = useState("");
   const [rooms, setRooms] = useState("");
@@ -38,35 +44,39 @@ export default function PublicCatalog() {
   );
   return (
     <>
-      <PageTitle
-        title="Xonadon tanlang"
-        description="Majmualar bilan tanishing va ma’qul xonadon uchun murojaat qoldiring."
-      />
+      {!embedded && (
+        <PageTitle
+          title="Xonadon tanlang"
+          description="Majmualar bilan tanishing va ma’qul xonadon uchun murojaat qoldiring."
+        />
+      )}
       <section className="glass panel">
-        <form
-          className="panel-toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSlug(input.trim());
-            setOffset(0);
-            setComplex("");
-            setRooms("");
-            setReceipt(null);
-          }}
-        >
-          <Field label="Kompaniya identifikatori">
-            <input
-              required
-              pattern="[a-zA-Z0-9_-]+"
-              value={input}
-              placeholder="Masalan: ozod-demo"
-              onChange={(e) => setInput(e.target.value)}
-            />
-          </Field>
-          <button className="primary">
-            Katalogni ochish <ArrowUpRight size={16} />
-          </button>
-        </form>
+        {!embedded && (
+          <form
+            className="panel-toolbar"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSlug(input.trim());
+              setOffset(0);
+              setComplex("");
+              setRooms("");
+              setReceipt(null);
+            }}
+          >
+            <Field label="Kompaniya identifikatori">
+              <input
+                required
+                pattern="[a-zA-Z0-9_-]+"
+                value={input}
+                placeholder="Masalan: ozod-demo"
+                onChange={(e) => setInput(e.target.value)}
+              />
+            </Field>
+            <button className="primary">
+              Katalogni ochish <ArrowUpRight size={16} />
+            </button>
+          </form>
+        )}
         {slug && (
           <>
             <div className="tabs">

@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Path, Query
@@ -8,6 +9,19 @@ from app.models import Apartment, Company, Complex, Lead
 from app.schemas import ApartmentRead, ComplexRead, LeadCreate, LeadReceipt
 
 router = APIRouter(prefix="/api/v1/companies/{slug}", tags=["Public"])
+site_router = APIRouter(tags=["Public"])
+
+
+@site_router.get("/api/v1/site")
+async def site(session: SessionDep):
+    configured = os.environ.get("LANDING_COMPANY_SLUG")
+    statement = select(Company)
+    if configured:
+        statement = statement.where(Company.slug == configured)
+    companies = (await session.exec(statement.limit(2))).all()
+    if len(companies) != 1:
+        raise HTTPException(503, "Sayt kompaniyasi sozlanmagan")
+    return {"slug": companies[0].slug, "name": companies[0].name}
 
 
 async def company_id(session, slug):

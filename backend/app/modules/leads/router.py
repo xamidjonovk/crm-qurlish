@@ -49,7 +49,7 @@ async def leads(
             )
         )
     return (
-        await session.exec(statement.order_by(Lead.id).offset(offset).limit(limit))
+        await session.exec(statement.order_by(Lead.id.desc()).offset(offset).limit(limit))
     ).all()
 
 

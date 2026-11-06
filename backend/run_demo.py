@@ -14,6 +14,7 @@ if url.host not in ("localhost", "127.0.0.1"):
 os.environ["DATABASE_URL"] = url.set(
     database="course_crm_frontend_demo"
 ).render_as_string(hide_password=False)
+os.environ.setdefault("LANDING_COMPANY_SLUG", "ozod-demo")
 settings.cache_clear()
 if __name__ == "__main__":
     import uvicorn

@@ -1,5 +1,7 @@
 """Explicit, additive 4-building / 7-floor synthetic residence for local demos."""
 
+import argparse
+
 from sqlalchemy.engine import make_url
 from sqlmodel import Session, select
 
@@ -8,16 +10,16 @@ from app.core.db import engine
 from app.models import Apartment, Building, Company, Complex
 
 
-def seed():
+def seed(company_slug="ozod-demo", allow_production=False):
     url = make_url(settings().database_url.get_secret_value())
-    if not (url.database or "").startswith("course_crm_"):
+    if not (url.database or "").startswith("course_crm_") and not allow_production:
         raise SystemExit("Only course_crm_ demo/test databases are supported")
     with Session(engine()) as session:
         company = session.exec(
-            select(Company).where(Company.slug == "ozod-demo")
+            select(Company).where(Company.slug == company_slug)
         ).first()
         if company is None:
-            raise SystemExit("Run app.seed first")
+            raise SystemExit("Requested company does not exist")
         if session.exec(
             select(Complex).where(
                 Complex.company_id == company.id,
@@ -81,4 +83,8 @@ def seed():
 
 
 if __name__ == "__main__":
-    seed()
+    parser = argparse.ArgumentParser(description="Add a clearly labeled sample residence to an existing company")
+    parser.add_argument("--company", default="ozod-demo")
+    parser.add_argument("--production", action="store_true", help="Explicitly allow additive sample data in production")
+    args = parser.parse_args()
+    seed(args.company, args.production)

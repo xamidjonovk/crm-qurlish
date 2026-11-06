@@ -17,7 +17,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.catalog.router import router as catalog_router
 from app.modules.inventory.router import router as inventory_router
 from app.modules.leads.router import router as crm_router
-from app.modules.public.router import router
+from app.modules.public.router import router, site_router
 from app.modules.residence.router import router as residence_router
 from app.modules.users.router import router as users_router
 
@@ -38,6 +38,7 @@ async def lifespan(app):
 app = FastAPI(title="Construction CRM", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.include_router(router)
+app.include_router(site_router)
 app.include_router(catalog_router)
 
 frontend_dir = Path(

@@ -1,0 +1,37 @@
+import { test, expect } from "@playwright/test";
+
+test("landing to 3D inquiry reaches the employee dashboard", async ({ browser }) => {
+  test.setTimeout(90000);
+  const customer = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await customer.goto("/");
+  await expect(customer.getByRole("heading", { name: /O‘zingizni/ })).toBeVisible();
+  await customer.getByRole("button", { name: "3D katalogni ochish" }).click();
+  await expect(customer.getByTestId("residence-canvas").locator("canvas")).toBeVisible();
+  await customer.getByRole("button", { name: /^A bino 7/ }).click();
+  await customer.getByRole("button", { name: "1-qavat", exact: true }).click();
+  await customer.locator(".res-unit-row").filter({ hasText: "A-02" }).click();
+  await customer.locator(".res-inspector").getByRole("button", { name: "Ariza qoldirish" }).click();
+  const name = `Test Mijoz ${Date.now()}`;
+  await customer.getByLabel("Ism va familiya").fill(name);
+  await customer.getByLabel("Telefon raqami").fill("+998901234567");
+  await customer.getByRole("checkbox").check();
+  await customer.getByRole("button", { name: "Arizani yuborish" }).click();
+  await expect(customer.getByText(/Arizangiz qabul qilindi/)).toBeVisible();
+  await customer.screenshot({path:"test-results/landing-desktop.png"});
+  const employee = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await employee.goto("/");
+  await employee.getByRole("button", { name: /Xodimlar uchun kirish/ }).first().click();
+  await employee.getByLabel("Foydalanuvchi nomi", {exact:true}).fill("demo.admin");
+  await employee.getByLabel("Parol", {exact:true}).fill("Qurilish-Demo-2026!");
+  await employee.getByRole("button", {name:"Tizimga kirish",exact:true}).click();
+  await expect(employee.getByText(name)).toBeVisible();
+  await employee.getByRole("button", {name:"Boshqaruv paneli"}).click();
+  await expect(employee.getByText("Jami murojaatlar")).toBeVisible();
+  await employee.getByRole("button", {name:"Majmua 3D",exact:true}).click();
+  await expect(employee.getByTestId("residence-canvas").locator("canvas")).toBeVisible();
+  await customer.setViewportSize({width:390,height:844});
+  await customer.goto("/");
+  await expect.poll(() => customer.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await customer.screenshot({path:"test-results/landing-mobile.png",fullPage:true});
+  await customer.close(); await employee.close();
+});

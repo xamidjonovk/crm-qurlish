@@ -11,7 +11,7 @@ import {
   LogOut,
   ShieldCheck,
   Activity,
-  ArrowLeft,
+  BarChart3,
   Layers3,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -24,7 +24,15 @@ const Team = dynamic(() => import("@/features/team/team"));
 const Audit = dynamic(() => import("@/features/audit/audit"));
 const Public = dynamic(() => import("@/features/public/catalog"));
 const Residence = dynamic(() => import("@/features/residence/residence"));
+const Landing = dynamic(() => import("@/features/public/landing"));
+const Dashboard = dynamic(() => import("@/features/dashboard/dashboard"));
 const items = [
+  {
+    key: "dashboard",
+    label: "Boshqaruv paneli",
+    icon: BarChart3,
+    permission: "leads:read",
+  },
   {
     key: "residence",
     label: "Majmua 3D",
@@ -55,7 +63,7 @@ const items = [
 export function Workspace() {
   const { user, loading, logout } = useSession();
   const [page, setPage] = useState("leads");
-  const [publicMode, setPublicMode] = useState(false);
+  const [crmMode, setCrmMode] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("crm.open") === "1");
   const [error, setError] = useState("");
   const { data: health } = useSWR(
     user ? "/health" : null,
@@ -73,19 +81,8 @@ export function Workspace() {
         Ish muhiti tayyorlanmoqda…
       </div>
     );
-  if (!user) {
-    return publicMode ? (
-      <main className="public-main">
-        <button onClick={() => setPublicMode(false)}>
-          <ArrowLeft size={16} />
-          Kirishga qaytish
-        </button>
-        <Public />
-      </main>
-    ) : (
-      <Login onPublic={() => setPublicMode(true)} />
-    );
-  }
+  if (!crmMode) return <Landing onLogin={() => { sessionStorage.setItem("crm.open", "1"); setCrmMode(true); }} />;
+  if (!user) return <Login onPublic={() => { sessionStorage.removeItem("crm.open"); setCrmMode(false); }} />;
   const visible = items.filter(
     (x) => !x.permission || user.permissions.includes(x.permission),
   );
@@ -145,7 +142,7 @@ export function Workspace() {
             </div>
             <button
               aria-label="Chiqish"
-              onClick={() => logout().catch((e) => setError(e.message))}
+              onClick={() => { sessionStorage.removeItem("crm.open"); logout().catch((e) => setError(e.message)); }}
             >
               <LogOut size={17} />
             </button>
@@ -157,7 +154,9 @@ export function Workspace() {
               {error}
             </p>
           )}
-          {current.key === "leads" ? (
+          {current.key === "dashboard" ? (
+            <Dashboard />
+          ) : current.key === "leads" ? (
             <Leads />
           ) : current.key === "residence" ? (
             <Residence />

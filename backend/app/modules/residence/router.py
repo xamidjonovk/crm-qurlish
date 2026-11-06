@@ -6,7 +6,7 @@ from sqlmodel import select
 
 from app.core.db import SessionDep
 from app.identity import User
-from app.models import Apartment, Building, Complex
+from app.models import Apartment, Building, Complex, Lead
 from app.modules.auth.router import require_permission
 from app.modules.catalog.router import find, save
 from app.modules.public.router import company_id
@@ -17,6 +17,13 @@ ReadDep = Annotated[User, Depends(require_permission("leads:read"))]
 WriteDep = Annotated[User, Depends(require_permission("inventory:write"))]
 router = APIRouter(tags=["3D Residence"])
 prefix = "/api/v1/crm/residence"
+
+
+@router.get("/api/v1/crm/dashboard")
+async def dashboard(user: ReadDep, session: SessionDep):
+    lead_rows = (await session.exec(select(Lead.stage, func.count(Lead.id)).where(Lead.company_id == user.company_id).group_by(Lead.stage))).all()
+    stock_rows = (await session.exec(select(Apartment.availability, func.count(Apartment.id)).where(Apartment.company_id == user.company_id).group_by(Apartment.availability))).all()
+    return {"leads": dict(lead_rows), "apartments": dict(stock_rows)}
 
 
 async def scene(session, tenant, complex_id):
