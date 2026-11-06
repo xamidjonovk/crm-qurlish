@@ -42,6 +42,8 @@ def issue_certificate():
     if result.returncode == 0:
         return "issued"
     if "Let's Encrypt dry run failed" in output and "requesting the real certificate" not in output:
+        if "NXDOMAIN" in output or "DNS problem:" in output:
+            return "dns_pending"
         return "staging_failed"
     # Never automatically retry a failed production issuance.
     return "failed"
@@ -98,6 +100,10 @@ def finish(state_dir, max_wait, interval, *, resolver=resolve_dns, issuer=issue_
                 sleeper(10)
             save_status(state_dir, status="https_verification_failed", deadline=deadline)
             return 1
+        if outcome == "dns_pending":
+            save_status(state_dir, status="waiting_for_acme_dns", deadline=deadline)
+            sleeper(min(900, max(0, deadline - now())))
+            continue
         if outcome == "staging_failed":
             staging_failures += 1
             if staging_failures < 3:
@@ -111,12 +117,15 @@ def finish(state_dir, max_wait, interval, *, resolver=resolve_dns, issuer=issue_
 
 
 def main():
+    global DOMAIN
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--domain", choices=["api.crmdev.uz", "crmdev.uz"], default=DOMAIN)
     parser.add_argument("--state-dir", type=Path, default=Path(os.getenv("STATE_DIRECTORY", "/var/lib/crm-qurlish-https")))
     parser.add_argument("--max-wait", type=int, default=43200)
     parser.add_argument("--interval", type=int, default=300)
     parser.add_argument("--check-dns", action="store_true")
     args = parser.parse_args()
+    DOMAIN = args.domain
     if args.max_wait < 1 or args.interval < 1:
         parser.error("Wait and interval must be positive")
     if args.check_dns:

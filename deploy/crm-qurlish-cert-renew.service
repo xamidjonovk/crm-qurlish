@@ -1,5 +1,5 @@
 [Unit]
-Description=Renew only the CRM API TLS certificate
+Description=Renew only the CRM domain TLS certificates
 ConditionPathExists=/etc/letsencrypt/live/api.crmdev.uz/fullchain.pem
 After=network-online.target
 Wants=network-online.target
@@ -8,4 +8,5 @@ Wants=network-online.target
 Type=oneshot
 UMask=0077
 ExecStart=/usr/bin/env certbot renew --cert-name api.crmdev.uz --quiet --deploy-hook "nginx -t && systemctl reload nginx"
+ExecStart=/usr/bin/env certbot renew --cert-name crmdev.uz --quiet --deploy-hook "nginx -t && systemctl reload nginx"
 TimeoutStartSec=15min

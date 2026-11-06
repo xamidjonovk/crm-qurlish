@@ -40,3 +40,11 @@ ssh sdp-crm-qurlish sudo sdp domains
 Sertifikat yangilanishi uchun faqat `api.crmdev.uz` ga xizmat qiladigan `crm-qurlish-cert-renew.timer` kunlik yoqilgan. U sertifikat mavjud bo‘lgach Certbot renewal bajaradi va muvaffaqiyatli yangilanganda Nginx’ni sintaksis tekshiruvidan keyin graceful reload qiladi. Boshqa loyihalarning renewal sozlamalari o‘zgartirilmaydi. Servislar uchun administrator diagnostikasi: `systemctl status crm-qurlish-https-setup.service` va `journalctl -u crm-qurlish-https-setup.service`.
 
 ACME webroot: `/var/www/sdp-acme/.well-known/acme-challenge`. Ushbu uch katalog Nginx o‘qishi uchun `0755` ruxsatida yaratilgan; challenge fayllari ommaviy o‘qilishi mumkin bo‘lishi kerak. Vaqtinchalik probe fayli server IP’si va `Host: api.crmdev.uz` orqali tashqaridan `200` javob va to‘g‘ri kontent bilan tekshirilgan, so‘ng o‘chirilgan. Sertifikatning maxfiy kalitlari bu webroot ichiga yozilmaydi.
+
+## HTTPS marshrutlarini ajratish
+
+`crmdev.uz` va `api.crmdev.uz` shu backend’ga ulanadi; bosh sahifa `/docs` ga yo‘naltiriladi, chunki frontend hali yaratilmagan. CertID o‘zining mavjud `certid.uz`/`www.certid.uz` domenlarida qoladi. Nginx’ga noma’lum HTTPS domenlari uchun alohida default reject bloki qo‘shilgan: ular CertID sahifasiga tushmaydi.
+
+CRM’ning ikki domeni IPv4 A yozuvlari orqali ishlaydi. Ushbu loyiha broker marshrutlarida IPv6 listener o‘chirilgan (`ipv6: false`), chunki serverning Tailscale xizmati alohida IPv6 443 soketidan foydalanadi. Boshqa loyihalar yoki Tailscale sozlamalari o‘zgartirilmaydi.
+
+Snap Certbot `/root/snap` katalogidan foydalanadi; setup xizmatiga `ProtectHome=true` qo‘llanmaydi. Xizmat loyiha foydalanuvchisi ostida ishlaydi va faqat cheklangan broker orqali sertifikat amallarini bajaradi. Ikkinchi domen uchun `crm-qurlish-root-https-setup.service` va `/var/lib/crm-qurlish-root-https/status.json` mavjud. CA tarafida DNS keshi eski bo‘lsa faqat staging tekshiruvi takrorlanadi; production issuance xatosi takrorlanmaydi. Renewal xizmati faqat CRM’ning ikki sertifikatini yangilaydi.

@@ -1,0 +1,22 @@
+[Unit]
+Description=Finish CRM root domain HTTPS after DNS propagation
+Wants=network-online.target
+After=network-online.target nginx.service
+
+[Service]
+Type=simple
+User=sdp-crm-qurlish
+Group=sdp-crm-qurlish
+StateDirectory=crm-qurlish-root-https
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 /usr/local/lib/server-deploy/crm-qurlish-finalize-https.py --domain crmdev.uz --max-wait 43200 --interval 300
+RuntimeMaxSec=13h
+Restart=no
+PrivateTmp=true
+
+# Snap Certbot must access its own root-owned data under /root/snap.
+# The service still runs as sdp-crm-qurlish and only elevates through the broker.
+
+[Install]
+WantedBy=multi-user.target

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -29,6 +30,11 @@ async def lifespan(app):
 app = FastAPI(title="Construction CRM", lifespan=lifespan)
 app.include_router(router)
 app.include_router(catalog_router)
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
