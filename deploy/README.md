@@ -19,3 +19,7 @@ Domen berilmaganda CORS ro‘yxati bo‘sh, ruxsat etilgan Host qiymatlari local
 GitHub Actions’da push test va image build bajaradi. Actions → Test, build and deploy → Run workflow orqali production deploy qo‘lda boshlanadi. `SDP_HOST`, `SDP_PORT`, `SDP_USER`, `SDP_SSH_KEY`, `SDP_KNOWN_HOSTS` repository secretlari kerak. CI kaliti faqat broker deploy buyrug‘ini ishga tushira oladi. Oddiy root SSH yoki umumiy Docker ruxsati CI’ga berilmaydi.
 
 Schema o‘zgartirishdan oldin loyiha bazasining zaxirasini oling. Broker ilova release’ini rollback qilishi mumkin, lekin bazaga qo‘llangan migratsiyani orqaga qaytarmaydi. Production’da local `release.sh` va `backup.sh` o‘rniga broker orqali tasdiqlangan buyruqlardan foydalaning; ushbu eski yordamchilar oddiy lokal Compose uchun saqlangan.
+
+## IP va port orqali kirish
+
+Tashqi HTTP port: `20001`. Host Nginx’dagi `/etc/nginx/conf.d/crm-qurlish-port.conf` faqat ushbu loyiha uchun `127.0.0.1:20000` ga proxy qiladi; namuna `nginx-port.conf.example` da. Server IP’si `ALLOWED_HOSTS` ga kiritiladi. Manzil: `http://<server-ip>:20001/docs`. Bu port HTTP orqali ishlaydi; domen/TLS keyinchalik alohida sozlanadi. Konfiguratsiya o‘zgartirilganda avval `nginx -t`, so‘ng graceful reload bajariladi. Ushbu listener Docker Compose emas, host Nginx orqali boshqariladi.
