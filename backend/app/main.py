@@ -1,3 +1,4 @@
+import mimetypes
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -21,6 +22,8 @@ from app.modules.residence.router import router as residence_router
 from app.modules.users.router import router as users_router
 
 from .observability import install
+
+mimetypes.add_type("image/webp", ".webp")
 
 
 @asynccontextmanager
