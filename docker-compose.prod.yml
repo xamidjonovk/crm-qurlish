@@ -1,7 +1,7 @@
 x-app: &app
   build:
-    context: ./backend
-    dockerfile: Dockerfile
+    context: .
+    dockerfile: backend/Dockerfile
   env_file: .env
   environment:
     DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-crm_owner}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}@db:5432/${POSTGRES_DB:-crm_course_v3}
@@ -9,6 +9,7 @@ x-app: &app
     ENVIRONMENT: production
     CORS_ORIGINS: ${CORS_ORIGINS:-[]}
     ALLOWED_HOSTS: ${ALLOWED_HOSTS:-["localhost","127.0.0.1"]}
+    API_ONLY_HOSTS: ${API_ONLY_HOSTS:-["api.crmdev.uz"]}
   mem_limit: 512m
   logging:
     driver: json-file

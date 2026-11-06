@@ -29,12 +29,24 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: frontend
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
       - run: uv run ruff check app tests
       - run: uv run alembic upgrade head
       - run: uv run pytest
       - run: uv run python ../deploy/test_finalize_https.py
+      - run: uv run python prepare_test_db.py
+        env:
+          DEMO_PASSWORD: Qurilish-Demo-2026!
+      - run: npx playwright install --with-deps chromium && npm test
+        working-directory: frontend
   build:
     needs: test
     if: github.event_name != 'pull_request'
@@ -55,7 +67,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          context: .
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.image.outputs.image }}
   deploy:

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
     environment: str = "development"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1", "testserver"]
+    api_only_hosts: list[str] = []
     jwt_secret: SecretStr
     access_minutes: int = 15
     model_config = SettingsConfigDict(env_file=("../.env", ".env"), extra="ignore")

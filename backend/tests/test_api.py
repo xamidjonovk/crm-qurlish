@@ -119,3 +119,20 @@ def test_auth_catalog_and_leads():
             ).status_code
             == 401
         )
+
+
+def test_frontend_and_api_domain_routing(monkeypatch, tmp_path):
+    from app import main
+    from app.core.config import settings
+
+    (tmp_path / "index.html").write_text("<!doctype html><title>Qurilish CRM</title>")
+    monkeypatch.setattr(main, "frontend_dir", tmp_path)
+    with make_client() as client:
+        response = client.get("/", follow_redirects=False)
+        assert response.status_code == 200
+        assert "Qurilish CRM" in response.text
+        monkeypatch.setattr(settings(), "api_only_hosts", ["testserver"])
+        response = client.get("/", follow_redirects=False)
+        assert response.status_code == 307
+        assert response.headers["location"] == "/docs"
+        assert client.get("/health").status_code == 200

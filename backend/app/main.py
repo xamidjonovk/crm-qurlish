@@ -1,8 +1,11 @@
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -31,9 +34,19 @@ app = FastAPI(title="Construction CRM", lifespan=lifespan)
 app.include_router(router)
 app.include_router(catalog_router)
 
+frontend_dir = Path(
+    os.environ.get("FRONTEND_DIR", Path(__file__).resolve().parents[2] / "frontend" / "out")
+)
+if (frontend_dir / "_next").is_dir():
+    app.mount("/_next", StaticFiles(directory=frontend_dir / "_next"), name="next-assets")
+
 
 @app.get("/", include_in_schema=False)
-def index():
+def index(request: Request):
+    if request.url.hostname in settings().api_only_hosts:
+        return RedirectResponse(url="/docs")
+    if (frontend_dir / "index.html").is_file():
+        return FileResponse(frontend_dir / "index.html")
     return RedirectResponse(url="/docs")
 
 

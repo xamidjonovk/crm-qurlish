@@ -10,3 +10,10 @@ private-files/
 .env.*
 !.env.example
 .idea/
+
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo

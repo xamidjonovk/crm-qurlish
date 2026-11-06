@@ -5,7 +5,7 @@ from sqlmodel import or_, select
 
 from app.core.db import SessionDep
 from app.identity import Audit
-from app.models import Lead
+from app.models import Apartment, Lead
 from app.modules.auth.router import UserDep, WriterDep
 from app.schemas import LeadRead, StageChange
 
@@ -76,6 +76,49 @@ async def stage(lead_id: int, data: StageChange, user: WriterDep, session: Sessi
             actor_id=user.id,
             action="lead.stage." + data.stage,
             resource_id=lead_id,
+        )
+    )
+    await session.commit()
+    await session.refresh(lead)
+    return lead
+
+
+class SaleConfirm(StageChange):
+    stage: Literal["won"] = "won"
+
+
+@router.post("/arizalar/{lead_id}/confirm-sale", response_model=LeadRead)
+async def confirm_sale(
+    lead_id: int, data: SaleConfirm, user: WriterDep, session: SessionDep
+):
+    lead = await find_lead(session, user, lead_id, lock=True)
+    if lead.version != data.expected_version:
+        raise HTTPException(409, "Ariza o‘zgargan; yangilab qayta urinib ko‘ring")
+    if lead.stage != "viewing":
+        raise HTTPException(409, "Sotuv faqat ko‘rik bosqichidan yakunlanadi")
+    apartment = (
+        await session.exec(
+            select(Apartment)
+            .where(
+                Apartment.id == lead.apartment_id,
+                Apartment.company_id == user.company_id,
+            )
+            .with_for_update()
+        )
+    ).first()
+    if apartment is None or apartment.availability != "available":
+        raise HTTPException(409, "Xonadon sotilgan yoki mavjud emas")
+    apartment.availability = "sold"
+    lead.stage = "won"
+    lead.version += 1
+    session.add(apartment)
+    session.add(lead)
+    session.add(
+        Audit(
+            company_id=user.company_id,
+            actor_id=user.id,
+            action="sale.confirmed",
+            resource_id=lead.id,
         )
     )
     await session.commit()

@@ -1,6 +1,6 @@
 # Construction CRM
 
-FastAPI va PostgreSQL asosidagi CRM. Backend `backend/` ichida, frontend esa hozircha bo‘sh. API endpointlari va mavjud Alembic revisionlari saqlangan.
+FastAPI va PostgreSQL asosidagi CRM. Backend `backend/`, frontend `frontend/` ichida. Frontend API bilan bir manzildan ishlaydi.
 
 ## Docker bilan ishga tushirish
 
@@ -26,7 +26,9 @@ Backend ishga tushganda `alembic upgrade head` avtomatik bajariladi. Migratsiya 
 docker compose run --rm api python -m app.bootstrap
 ```
 
-API hujjati: http://127.0.0.1:8001/docs. Development rejimi uchun `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` dan foydalaning; unda ham migratsiya avtomatik bajariladi. Migratsiyalarni bir vaqtning o‘zida bir nechta API nusxasida ishga tushirmang.
+Frontend: http://127.0.0.1:8001/; API hujjati: http://127.0.0.1:8001/docs. Development rejimi uchun `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` dan foydalaning; unda ham migratsiya avtomatik bajariladi. Migratsiyalarni bir vaqtning o‘zida bir nechta API nusxasida ishga tushirmang.
+
+Administrator yaratish buyrug‘idan so‘ng uning hisobi bilan kiring. Xodimlarning huquqlari backend rollariga mos. Ochiq katalogni ko‘rish uchun kompaniya slug'i kerak. Brauzer seansi davomida tokenlar `sessionStorage`da saqlanadi; chiqish ushbu brauzerdagi tokenlarni tozalaydi. Barcha qurilmalardagi sessiyalarni bekor qilish uchun API’ning `logout-all` endpointidan foydalaning.
 
 Ma’lumotlar `postgres_data` volume’da saqlanadi. PostgreSQL boshlang‘ich foydalanuvchisi, paroli va baza nomi faqat yangi volume’da qo‘llanadi; `.env` ni keyin o‘zgartirish mavjud bazani yangilamaydi. Compose API’ni faqat localhost’da ochadi. Serverga chiqarish uchun [deploy/README.md](deploy/README.md) ga qarang.
 
@@ -46,3 +48,8 @@ uv run python -m app
 ## Tekshirish
 
 `backend` katalogida `uv run ruff check app tests` va `uv run pytest` ni bajaring. PostgreSQL integratsion testi uchun `DATABASE_URL` va `TEST_DATABASE_URL` bir xil, `course_crm_` bilan boshlanuvchi alohida test bazasiga yo‘naltirilishi va unga avval `uv run alembic upgrade head` qo‘llanishi kerak. Test mavjud ilova bazasi uchun mo‘ljallanmagan.
+
+
+## Next.js frontend va demo
+
+Modulli Next.js frontend, API qamrovi, demo hisoblar va E2E tekshiruvlar uchun [frontend/README.md](frontend/README.md) ga qarang. Docker image Next.js production exportni avtomatik yaratadi. Lokal backendni ishga tushirishdan oldin `frontend` ichida `npm ci` va `npm run build` bajaring.

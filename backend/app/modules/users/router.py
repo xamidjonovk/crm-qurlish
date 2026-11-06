@@ -50,7 +50,10 @@ async def create_user(data: UserCreate, user: UserDep, session: SessionDep):
 
 @router.get("/users")
 async def users(
-    user: UserDep, session: SessionDep, limit: Annotated[int, Query(ge=1, le=100)] = 20
+    user: UserDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     if user.role != "admin":
         raise HTTPException(403, "Faqat admin")
@@ -59,6 +62,7 @@ async def users(
             select(User)
             .where(User.company_id == user.company_id)
             .order_by(User.id)
+            .offset(offset)
             .limit(limit)
         )
     ).all()
@@ -70,7 +74,10 @@ async def users(
 
 @router.get("/audit")
 async def audit(
-    user: UserDep, session: SessionDep, limit: Annotated[int, Query(ge=1, le=100)] = 20
+    user: UserDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     if user.role != "admin":
         raise HTTPException(403, "Faqat admin")
@@ -79,6 +86,7 @@ async def audit(
             select(Audit)
             .where(Audit.company_id == user.company_id)
             .order_by(Audit.id.desc())
+            .offset(offset)
             .limit(limit)
         )
     ).all()

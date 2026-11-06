@@ -43,8 +43,15 @@ ACME webroot: `/var/www/sdp-acme/.well-known/acme-challenge`. Ushbu uch katalog 
 
 ## HTTPS marshrutlarini ajratish
 
-`crmdev.uz` va `api.crmdev.uz` shu backend’ga ulanadi; bosh sahifa `/docs` ga yo‘naltiriladi, chunki frontend hali yaratilmagan. CertID o‘zining mavjud `certid.uz`/`www.certid.uz` domenlarida qoladi. Nginx’ga noma’lum HTTPS domenlari uchun alohida default reject bloki qo‘shilgan: ular CertID sahifasiga tushmaydi.
+`crmdev.uz` va `api.crmdev.uz` shu backend’ga ulanadi; frontend bosh sahifada, API hujjatlari esa `/docs` manzilida ochiladi. Frontend backend image ichiga yig‘iladi va API bilan bir origin orqali ishlaydi. CertID o‘zining mavjud `certid.uz`/`www.certid.uz` domenlarida qoladi. Nginx’ga noma’lum HTTPS domenlari uchun alohida default reject bloki qo‘shilgan: ular CertID sahifasiga tushmaydi.
 
 CRM’ning ikki domeni IPv4 A yozuvlari orqali ishlaydi. Ushbu loyiha broker marshrutlarida IPv6 listener o‘chirilgan (`ipv6: false`), chunki serverning Tailscale xizmati alohida IPv6 443 soketidan foydalanadi. Boshqa loyihalar yoki Tailscale sozlamalari o‘zgartirilmaydi.
 
 Snap Certbot `/root/snap` katalogidan foydalanadi; setup xizmatiga `ProtectHome=true` yoki `PrivateTmp=true` qo‘llanmaydi. Xizmat loyiha foydalanuvchisi ostida ishlaydi va faqat cheklangan broker orqali sertifikat amallarini bajaradi. Ikkinchi domen uchun `crm-qurlish-root-https-setup.service` va `/var/lib/crm-qurlish-root-https/status.json` mavjud. CA tarafida DNS keshi eski bo‘lsa faqat staging tekshiruvi takrorlanadi; production issuance xatosi takrorlanmaydi. Renewal xizmati faqat CRM’ning ikki sertifikatini yangilaydi.
+
+
+## Frontend bilan yagona Compose release
+
+`backend/Dockerfile` ikki bosqichda yig‘iladi: Node 22 Next.js static exportni yaratadi, keyin natija Python image ichiga ko‘chiriladi. Alohida frontend jarayoni talab qilinmaydi: `api` Compose xizmati `/` va `/_next` orqali frontendni, `/api/v1` orqali backendni beradi. `crmdev.uz` shu xizmatdagi frontendni ochadi. `API_ONLY_HOSTS=["api.crmdev.uz"]` API domeni bosh sahifasini `/docs` ga yo‘naltiradi. Frontenddan so‘rovlar shu origin ichidagi `/api/v1` ga ketadi.
+
+Lokal: `docker compose up -d --build`. Production: `docker-compose.prod.yml` va `sdp-crm-qurlish` Compose projecti. Build uchun npm lockfile ishlatiladi; tayyor image ishga tushganda Node/npm yoki tashqi font xizmatiga bog‘liq emas.
