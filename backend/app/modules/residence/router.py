@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -6,7 +7,7 @@ from sqlmodel import select
 
 from app.core.db import SessionDep
 from app.identity import User
-from app.models import Apartment, Building, Complex, Lead
+from app.models import Apartment, Building, Complex, Lead, now
 from app.modules.auth.router import require_permission
 from app.modules.catalog.router import find, save
 from app.modules.public.router import company_id
@@ -21,9 +22,44 @@ prefix = "/api/v1/crm/residence"
 
 @router.get("/api/v1/crm/dashboard")
 async def dashboard(user: ReadDep, session: SessionDep):
-    lead_rows = (await session.exec(select(Lead.stage, func.count(Lead.id)).where(Lead.company_id == user.company_id).group_by(Lead.stage))).all()
-    stock_rows = (await session.exec(select(Apartment.availability, func.count(Apartment.id)).where(Apartment.company_id == user.company_id).group_by(Apartment.availability))).all()
-    return {"leads": dict(lead_rows), "apartments": dict(stock_rows)}
+    lead_rows = (
+        await session.exec(
+            select(Lead.stage, func.count(Lead.id))
+            .where(Lead.company_id == user.company_id)
+            .group_by(Lead.stage)
+        )
+    ).all()
+    stock_rows = (
+        await session.exec(
+            select(Apartment.availability, func.count(Apartment.id))
+            .where(Apartment.company_id == user.company_id)
+            .group_by(Apartment.availability)
+        )
+    ).all()
+    cutoff = now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
+        days=29
+    )
+    daily_rows = (
+        await session.exec(
+            select(func.date(Lead.consent_at), func.count(Lead.id))
+            .where(Lead.company_id == user.company_id, Lead.consent_at >= cutoff)
+            .group_by(func.date(Lead.consent_at))
+            .order_by(func.date(Lead.consent_at))
+        )
+    ).all()
+    sample_count = (
+        await session.exec(
+            select(func.count(Lead.id)).where(
+                Lead.company_id == user.company_id, Lead.source == "demo-dashboard-v1"
+            )
+        )
+    ).one()
+    return {
+        "leads": dict(lead_rows),
+        "apartments": dict(stock_rows),
+        "daily": [{"date": str(day), "count": count} for day, count in daily_rows],
+        "sample_leads": sample_count,
+    }
 
 
 async def scene(session, tenant, complex_id):

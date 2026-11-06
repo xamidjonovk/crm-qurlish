@@ -5,6 +5,7 @@ import { Phone, Search, ArrowUpRight } from "lucide-react";
 import { api, fetcher, json } from "@/lib/api";
 import { stages, type Lead } from "@/lib/types";
 import { useSession } from "@/features/auth/session";
+import { LeadDetail } from "./lead-detail";
 import {
   PageTitle,
   Resource,
@@ -134,10 +135,14 @@ export default function Leads() {
                       <small>Ariza #{x.id}</small>
                     </td>
                     <td>
-                      <a className="phone" href={"tel:" + x.phone}>
-                        <Phone size={13} />
-                        {x.phone}
-                      </a>
+                      {x.source === "demo-dashboard-v1" ? (
+                        <span>Namuna raqam</span>
+                      ) : (
+                        <a className="phone" href={"tel:" + x.phone}>
+                          <Phone size={13} />
+                          {x.phone}
+                        </a>
+                      )}
                     </td>
                     <td>#{x.apartment_id}</td>
                     <td>
@@ -215,25 +220,7 @@ export default function Leads() {
           )}
         </Editor>
       )}
-      {detail && (
-        <Editor
-          title={`Ariza #${detail.id}`}
-          submit="Yopish"
-          onClose={() => setDetail(null)}
-          onSave={async () => {}}
-        >
-          <dl>
-            <dt>Mijoz</dt>
-            <dd>{detail.full_name}</dd>
-            <dt>Telefon</dt>
-            <dd>{detail.phone}</dd>
-            <dt>Bosqich</dt>
-            <dd>{stages[detail.stage]}</dd>
-            <dt>Xonadon</dt>
-            <dd>#{detail.apartment_id}</dd>
-          </dl>
-        </Editor>
-      )}
+      {detail && <LeadDetail lead={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }

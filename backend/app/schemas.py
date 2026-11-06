@@ -54,6 +54,7 @@ class LeadRead(LeadReceipt):
     phone: str
     apartment_id: int
     version: int
+    source: str
 
 
 class StageChange(BaseModel):

@@ -122,3 +122,20 @@ class Lead(SQLModel, table=True):
     consent_at: datetime = Field(
         default_factory=now, sa_column=Column(DateTime(timezone=True), nullable=False)
     )
+
+
+class LeadNote(SQLModel, table=True):
+    __tablename__ = "lead_notes"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "lead_id"], ["leads.company_id", "leads.id"]
+        ),
+    )
+    id: int | None = Field(default=None, primary_key=True)
+    company_id: int = Field(foreign_key="companies.id", index=True)
+    lead_id: int = Field(index=True)
+    author_id: int = Field(foreign_key="users.id")
+    text: str = Field(max_length=2000)
+    created_at: datetime = Field(
+        default_factory=now, sa_column=Column(DateTime(timezone=True), nullable=False)
+    )

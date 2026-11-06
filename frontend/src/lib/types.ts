@@ -12,6 +12,7 @@ export type Lead = {
   apartment_id: number;
   stage: string;
   version: number;
+  source: string;
 };
 export type Complex = { id: number; name: string };
 export type Apartment = {

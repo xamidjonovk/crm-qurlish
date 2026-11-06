@@ -183,6 +183,14 @@ def test_residence_tenant_boundaries_placement_and_live_inventory():
                 "consent": True,
             },
         ).json()["id"]
+        notes = f"/api/v1/crm/arizalar/{lid}/notes"
+        assert client.get(notes).status_code == 401
+        assert client.get(notes, headers=other).status_code == 404
+        assert client.post(notes, headers=viewer, json={"text": "test"}).status_code == 403
+        assert client.post(notes, headers=seller, json={"text": "   "}).status_code == 422
+        assert client.post(notes, headers=seller, json={"text": "Uchrashuv haqida eslatma"}).status_code == 201
+        assert client.get(notes, headers=viewer).json()[0]["text"] == "Uchrashuv haqida eslatma"
+        assert client.post(notes, headers=other, json={"text": "x"}).status_code == 404
         for version, stage in ((1, "contacted"), (2, "viewing")):
             assert (
                 client.patch(

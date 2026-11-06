@@ -13,6 +13,7 @@ import {
   Activity,
   BarChart3,
   Layers3,
+  KanbanSquare,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { roles } from "@/lib/types";
@@ -26,6 +27,7 @@ const Public = dynamic(() => import("@/features/public/catalog"));
 const Residence = dynamic(() => import("@/features/residence/residence"));
 const Landing = dynamic(() => import("@/features/public/landing"));
 const Dashboard = dynamic(() => import("@/features/dashboard/dashboard"));
+const Kanban = dynamic(() => import("@/features/leads/kanban"));
 const items = [
   {
     key: "dashboard",
@@ -37,6 +39,12 @@ const items = [
     key: "residence",
     label: "Majmua 3D",
     icon: Layers3,
+    permission: "leads:read",
+  },
+  {
+    key: "kanban",
+    label: "Kanban",
+    icon: KanbanSquare,
     permission: "leads:read",
   },
   {
@@ -63,7 +71,11 @@ const items = [
 export function Workspace() {
   const { user, loading, logout } = useSession();
   const [page, setPage] = useState("leads");
-  const [crmMode, setCrmMode] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("crm.open") === "1");
+  const [crmMode, setCrmMode] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      sessionStorage.getItem("crm.open") === "1",
+  );
   const [error, setError] = useState("");
   const { data: health } = useSWR(
     user ? "/health" : null,
@@ -81,8 +93,24 @@ export function Workspace() {
         Ish muhiti tayyorlanmoqda…
       </div>
     );
-  if (!crmMode) return <Landing onLogin={() => { sessionStorage.setItem("crm.open", "1"); setCrmMode(true); }} />;
-  if (!user) return <Login onPublic={() => { sessionStorage.removeItem("crm.open"); setCrmMode(false); }} />;
+  if (!crmMode)
+    return (
+      <Landing
+        onLogin={() => {
+          sessionStorage.setItem("crm.open", "1");
+          setCrmMode(true);
+        }}
+      />
+    );
+  if (!user)
+    return (
+      <Login
+        onPublic={() => {
+          sessionStorage.removeItem("crm.open");
+          setCrmMode(false);
+        }}
+      />
+    );
   const visible = items.filter(
     (x) => !x.permission || user.permissions.includes(x.permission),
   );
@@ -142,7 +170,10 @@ export function Workspace() {
             </div>
             <button
               aria-label="Chiqish"
-              onClick={() => { sessionStorage.removeItem("crm.open"); logout().catch((e) => setError(e.message)); }}
+              onClick={() => {
+                sessionStorage.removeItem("crm.open");
+                logout().catch((e) => setError(e.message));
+              }}
             >
               <LogOut size={17} />
             </button>
@@ -154,7 +185,9 @@ export function Workspace() {
               {error}
             </p>
           )}
-          {current.key === "dashboard" ? (
+          {current.key === "kanban" ? (
+            <Kanban />
+          ) : current.key === "dashboard" ? (
             <Dashboard />
           ) : current.key === "leads" ? (
             <Leads />

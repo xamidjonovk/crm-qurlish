@@ -2,8 +2,8 @@
   --forest: #213c31;
   --sand: #e7dfd0;
   --gold: #bd9770;
-  background: #f4f2ec;
-  color: #223a30;
+  background: #f1f1eb;
+  color: #1e3b32;
   font-family: inherit;
 }
 .landing button {
@@ -22,6 +22,8 @@
   padding: 0 6%;
   color: white;
   border-bottom: 1px solid #ffffff45;
+  background: #1b352c33;
+  backdrop-filter: blur(12px);
 }
 .landing-brand {
   display: flex;

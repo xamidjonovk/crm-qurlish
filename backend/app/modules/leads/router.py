@@ -1,11 +1,12 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlmodel import or_, select
 
 from app.core.db import SessionDep
 from app.identity import Audit
-from app.models import Apartment, Lead
+from app.models import Apartment, Lead, LeadNote
 from app.modules.auth.router import UserDep, WriterDep
 from app.schemas import LeadRead, StageChange
 
@@ -49,13 +50,46 @@ async def leads(
             )
         )
     return (
-        await session.exec(statement.order_by(Lead.id.desc()).offset(offset).limit(limit))
+        await session.exec(
+            statement.order_by(Lead.id.desc()).offset(offset).limit(limit)
+        )
     ).all()
 
 
 @router.get("/arizalar/{lead_id}", response_model=LeadRead)
 async def detail(lead_id: int, user: UserDep, session: SessionDep):
     return await find_lead(session, user, lead_id)
+
+
+class NoteInput(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+@router.get("/arizalar/{lead_id}/notes")
+async def notes(lead_id: int, user: UserDep, session: SessionDep):
+    await find_lead(session, user, lead_id)
+    return (
+        await session.exec(
+            select(LeadNote)
+            .where(LeadNote.company_id == user.company_id, LeadNote.lead_id == lead_id)
+            .order_by(LeadNote.id)
+        )
+    ).all()
+
+
+@router.post("/arizalar/{lead_id}/notes", status_code=201)
+async def add_note(lead_id: int, data: NoteInput, user: WriterDep, session: SessionDep):
+    await find_lead(session, user, lead_id)
+    text = data.text.strip()
+    if not text:
+        raise HTTPException(422, "Eslatma matnini kiriting")
+    note = LeadNote(
+        company_id=user.company_id, lead_id=lead_id, author_id=user.id, text=text
+    )
+    session.add(note)
+    await session.commit()
+    await session.refresh(note)
+    return note
 
 
 @router.patch("/arizalar/{lead_id}/stage", response_model=LeadRead)

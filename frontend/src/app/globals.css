@@ -1,9 +1,9 @@
 :root {
-  --ink: #18394a;
-  --muted: #536e7d;
-  --accent: #145f74;
-  --line: #cbdde480;
-  --glass: #ffffffa8;
+  --ink: #203b4b;
+  --muted: #536c7a;
+  --accent: #426d91;
+  --line: #c3d8e080;
+  --glass: #ffffffb8;
   --radius: 16px;
   color: var(--ink);
   font-family: "Manrope Variable", sans-serif;
@@ -17,8 +17,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 80% 0%, #c5e2e7 0, transparent 48%),
-    radial-gradient(ellipse at 0% 90%, #d9e4fb 0, transparent 45%), #edf3f7;
+    radial-gradient(ellipse at 90% 5%, #d1e6e4 0, transparent 45%),
+    radial-gradient(ellipse at 5% 85%, #d7ddf4 0, transparent 48%), #edf3f5;
   background-attachment: fixed;
 }
 button,
@@ -62,9 +62,9 @@ button:disabled {
   transform: none;
 }
 button.primary {
-  background: #145f74;
+  background: #315d77;
   color: #fff;
-  border-color: #145f74;
+  border-color: #315d77;
 }
 button.primary:hover {
   background: #0c4b60;
@@ -134,6 +134,7 @@ a {
   position: sticky;
   top: 18px;
   height: calc(100vh - 36px);
+  border: 1px solid #ffffffbd;
 }
 .brand {
   display: flex;
